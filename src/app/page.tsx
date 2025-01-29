@@ -2,22 +2,31 @@
 
 import { useEffect, useState } from "react";
 
+interface Todos {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
 // Intentionally missing proper type definition
 const TodoApp = () => {
-  const [todos, setTodos] = useState([]);
-  const [newTodo, setNewTodo] = useState("");
+  const [todos, setTodos] = useState<Todos[]>([]);
+  const [newTodo, setNewTodo] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     fetchTodos();
   }, []);
 
   const fetchTodos = async () => {
+    setLoading(true);
     const response = await fetch("/api/todos");
     const data = await response.json();
     setTodos(data);
+    setLoading(false);
   };
 
-  const addTodo = async (e) => {
+  const addTodo = async (e: React.FormEvent) => {
     e.preventDefault();
     const response = await fetch("/api/todos", {
       method: "POST",
@@ -32,23 +41,28 @@ const TodoApp = () => {
     setNewTodo("");
   };
 
-  const deleteTodo = async (id) => {
+  const deleteTodo = async (id: string) => {
     await fetch(`/api/todos?id=${id}`, {
       method: "DELETE",
     });
     // Bug: This doesn't update the UI because we're not using setTodos
-    todos.filter((todo) => todo.id !== id);
+    setTodos(todos.filter((todo) => todo.id !== id));
+    fetchTodos();
   };
 
   // Bug: No proper loading state handling
+  //solved by loading state
 
   return (
     // Bug: No proper responsive design
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100 p-12">
-      <div className="w-[800px] mx-auto bg-white rounded-2xl shadow-xl p-10">
+      <div className="w-[320px] lg:w-[800px] mx-auto bg-white rounded-2xl shadow-xl p-10">
         <h1 className="text-4xl font-bold text-gray-800 mb-12">Todo App</h1>
 
-        <form onSubmit={addTodo} className="flex w-full gap-6">
+        <form
+          onSubmit={addTodo}
+          className="flex w-full gap-6 flex-col lg:flex-row items-end"
+        >
           <input
             type="text"
             value={newTodo}
@@ -65,22 +79,24 @@ const TodoApp = () => {
         </form>
 
         <div className="mt-12 space-y-4">
-          {todos.map((todo) => (
-            <div
-              key={todo.id}
-              className="flex items-center justify-between bg-gray-50 p-6 rounded-xl border border-gray-100 hover:border-gray-200 transition-all"
-            >
-              <span className="text-xl text-gray-700 w-[500px] truncate">
-                {todo.title}
-              </span>
-              <button
-                onClick={() => deleteTodo(todo.id)}
-                className="min-w-[150px] bg-red-500 text-white font-medium px-6 py-3 rounded-xl hover:bg-red-600 transition-colors"
+          {loading && <p className="text-gray-500">Loading...</p>}
+          {!loading &&
+            todos.map((todo) => (
+              <div
+                key={todo.id}
+                className="flex flex-col gap-4 items-center justify-between bg-gray-50 p-6 rounded-xl border border-gray-100 hover:border-gray-200 transition-all"
               >
-                Delete
-              </button>
-            </div>
-          ))}
+                <span className="text-xl text-gray-700 truncate">
+                  {todo.title}
+                </span>
+                <button
+                  onClick={() => deleteTodo(todo.id)}
+                  className="min-w-[150px] bg-red-500 text-white font-medium px-6 py-3 rounded-xl hover:bg-red-600 transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
+            ))}
         </div>
       </div>
     </div>

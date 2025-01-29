@@ -6,7 +6,7 @@ type Todo = {
   completed: boolean;
 };
 
-let todos: Todo[] = [
+const todos: Todo[] = [
   { id: "1", title: "Learn Next.js", completed: false },
   { id: "2", title: "Build a project", completed: true },
 ];
@@ -34,7 +34,10 @@ export async function DELETE(request: Request) {
   const id = searchParams.get("id");
 
   // Bug: This doesn't actually filter the array
-  todos.filter((todo) => todo.id !== id);
+  todos.splice(
+    todos.findIndex((todo) => todo.id === id),
+    1
+  );
 
   return NextResponse.json({ message: "Todo deleted" });
 }
